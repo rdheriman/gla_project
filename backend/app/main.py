@@ -1,20 +1,40 @@
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+
 from fastapi import FastAPI
 from sqlalchemy import text
 
-from app.database import engine
+from app.database import Base, engine
+from app.routes.salle import router as salle_router
+
+
+@asynccontextmanager
+async def lifespan(
+    app: FastAPI,
+) -> AsyncIterator[None]:
+    async with engine.begin() as connection:
+        await connection.run_sync(
+            Base.metadata.create_all,
+        )
+
+    yield
+
+    await engine.dispose()
 
 
 app = FastAPI(
     title="API de réservation de salles",
     version="0.1.0",
+    lifespan=lifespan,
 )
+
+
+app.include_router(salle_router)
 
 
 @app.get("/")
 async def root():
-    return {
-        "message": "API de réservation de salles"
-    }
+    return {"message": "API de réservation de salles"}
 
 
 @app.get("/health")
