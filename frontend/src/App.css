@@ -1,0 +1,68 @@
+.container {
+  width: min(1100px, 90%);
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+header {
+  margin-bottom: 3rem;
+}
+
+section {
+  margin-bottom: 3rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+form {
+  display: grid;
+  gap: 1rem;
+  max-width: 500px;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+input,
+select,
+textarea,
+button {
+  padding: 0.7rem;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.message {
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.8rem;
+  border-bottom: 1px solid #ddd;
+}

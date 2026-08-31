@@ -120,6 +120,49 @@ async def test_adjacent_reservations_are_allowed(
     assert second.status_code == 201
 
 
+async def test_reservation_conflicting_with_multiple_slots_returns_409(
+    client,
+):
+    salle_id = await create_salle(client)
+
+    for debut, fin in [
+        (
+            "2026-09-01T10:00:00+03:00",
+            "2026-09-01T11:00:00+03:00",
+        ),
+        (
+            "2026-09-01T11:00:00+03:00",
+            "2026-09-01T12:00:00+03:00",
+        ),
+    ]:
+        response = await client.post(
+            "/reservations",
+            json={
+                "salle_id": salle_id,
+                "reservataire": "Alice",
+                "debut": debut,
+                "fin": fin,
+            },
+        )
+
+        assert response.status_code == 201
+
+    response = await client.post(
+        "/reservations",
+        json={
+            "salle_id": salle_id,
+            "reservataire": "Bob",
+            "debut": "2026-09-01T10:30:00+03:00",
+            "fin": "2026-09-01T11:30:00+03:00",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "La salle est déjà réservée sur ce créneau.",
+    }
+
+
 import pytest
 
 

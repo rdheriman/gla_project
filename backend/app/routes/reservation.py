@@ -9,7 +9,6 @@ from app.models.reservation import Reservation
 from app.models.salle import Salle
 from app.schemas.reservation import ReservationCreate, ReservationOut
 
-
 router = APIRouter(
     prefix="/reservations",
     tags=["Réservations"],
@@ -42,17 +41,21 @@ async def create_reservation(
             detail="Salle introuvable.",
         )
 
-    conflict_query = select(Reservation).where(
-        Reservation.salle_id == data.salle_id,
-        Reservation.debut < data.fin,
-        Reservation.fin > data.debut,
+    conflict_query = (
+        select(Reservation.id)
+        .where(
+            Reservation.salle_id == data.salle_id,
+            Reservation.debut < data.fin,
+            Reservation.fin > data.debut,
+        )
+        .limit(1)
     )
 
     result = await session.execute(conflict_query)
 
-    conflict = result.scalar_one_or_none()
+    conflict_id = result.scalar_one_or_none()
 
-    if conflict is not None:
+    if conflict_id is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="La salle est déjà réservée sur ce créneau.",

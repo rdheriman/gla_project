@@ -8,7 +8,7 @@ from app.database import Base, engine
 from app.routes.salle import router as salle_router
 
 from app.routes.reservation import router as reservation_router
-
+from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(
@@ -30,6 +30,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(salle_router)
 app.include_router(reservation_router)
