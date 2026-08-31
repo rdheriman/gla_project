@@ -7,6 +7,8 @@ from sqlalchemy import text
 from app.database import Base, engine
 from app.routes.salle import router as salle_router
 
+from app.routes.reservation import router as reservation_router
+
 
 @asynccontextmanager
 async def lifespan(
@@ -30,6 +32,7 @@ app = FastAPI(
 
 
 app.include_router(salle_router)
+app.include_router(reservation_router)
 
 
 @app.get("/")
