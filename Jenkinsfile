@@ -57,7 +57,8 @@ pipeline {
             steps {
                 sh '''
                     docker compose \
-                        up -d --wait postgres
+                    --profile ci \
+                    up -d --wait postgres-test
                 '''
             }
         }
