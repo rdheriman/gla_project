@@ -87,6 +87,9 @@ services:
       target: test
 
     environment:
+      DATABASE_URL: >-
+        postgresql+asyncpg://reservation:reservation@postgres-test:5432/reservation_salles_test
+
       TEST_DATABASE_URL: >-
         postgresql+asyncpg://reservation:reservation@postgres-test:5432/reservation_salles_test
 
