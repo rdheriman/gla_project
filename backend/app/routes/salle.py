@@ -2,13 +2,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.models.salle import Salle
 from app.schemas.salle import SalleCreate, SalleOut, SalleUpdate
-
 
 router = APIRouter(
     prefix="/salles",

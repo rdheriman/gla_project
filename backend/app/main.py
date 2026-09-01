@@ -1,14 +1,14 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import Base, engine
+from app.routes.reservation import router as reservation_router
 from app.routes.salle import router as salle_router
 
-from app.routes.reservation import router as reservation_router
-from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(

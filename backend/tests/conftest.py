@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
@@ -12,12 +13,14 @@ from sqlalchemy.pool import NullPool
 from app.database import Base, get_session
 from app.main import app
 
-
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://"
-    "reservation:reservation"
-    "@localhost:5433/"
-    "reservation_salles_test"
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    (
+        "postgresql+asyncpg://"
+        "reservation:reservation"
+        "@localhost:5433/"
+        "reservation_salles_test"
+    ),
 )
 
 
@@ -34,10 +37,7 @@ test_session_factory = async_sessionmaker(
 )
 
 
-async def override_get_session() -> AsyncGenerator[
-    AsyncSession,
-    None,
-]:
+async def override_get_session() -> AsyncGenerator[AsyncSession]:
     async with test_session_factory() as session:
         yield session
 

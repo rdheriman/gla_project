@@ -18,6 +18,16 @@ import type {
 import "./App.css";
 
 
+async function fetchData(): Promise<
+  [Salle[], Reservation[]]
+> {
+  return Promise.all([
+    getSalles(),
+    getReservations(),
+  ]);
+}
+
+
 function App() {
   const [salles, setSalles] = useState<Salle[]>([]);
   const [reservations, setReservations] =
@@ -35,30 +45,49 @@ function App() {
   const [loading, setLoading] = useState(true);
 
 
-  async function loadData() {
-    try {
-      const [
-        sallesData,
-        reservationsData,
-      ] = await Promise.all([
-        getSalles(),
-        getReservations(),
-      ]);
+  async function refreshData() {
+    const [
+      sallesData,
+      reservationsData,
+    ] = await fetchData();
 
-      setSalles(sallesData);
-      setReservations(reservationsData);
-    } catch (error) {
-      if (error instanceof Error) {
-        setMessage(error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
+    setSalles(sallesData);
+    setReservations(reservationsData);
   }
 
 
   useEffect(() => {
-    void loadData();
+    let cancelled = false;
+
+    fetchData()
+      .then(([
+        sallesData,
+        reservationsData,
+      ]) => {
+        if (cancelled) {
+          return;
+        }
+
+        setSalles(sallesData);
+        setReservations(reservationsData);
+      })
+      .catch((error: unknown) => {
+        if (
+          !cancelled &&
+          error instanceof Error
+        ) {
+          setMessage(error.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
 
@@ -78,6 +107,8 @@ function App() {
         motif: motif || undefined,
       });
 
+      await refreshData();
+
       setMessage(
         "Réservation créée avec succès.",
       );
@@ -86,8 +117,6 @@ function App() {
       setDebut("");
       setFin("");
       setMotif("");
-
-      await loadData();
     } catch (error) {
       if (error instanceof Error) {
         setMessage(error.message);
@@ -98,6 +127,7 @@ function App() {
       }
     }
   }
+
 
   if (loading) {
     return <p>Chargement...</p>;
