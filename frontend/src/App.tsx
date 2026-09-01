@@ -137,7 +137,7 @@ function App() {
   return (
     <main className="container">
       <header>
-        <h1>Réservation de salles</h1>
+        <h1>Gestion et réservation de salles</h1>
 
         <p>
           Gestion des salles et des réservations
