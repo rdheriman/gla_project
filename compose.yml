@@ -1,0 +1,114 @@
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: reservation-postgres
+
+    environment:
+      POSTGRES_DB: reservation_salles
+      POSTGRES_USER: reservation
+      POSTGRES_PASSWORD: reservation
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U reservation -d reservation_salles"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: reservation-backend
+
+    environment:
+      DATABASE_URL: >-
+        postgresql+asyncpg://reservation:reservation@postgres:5432/reservation_salles
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+
+    container_name: reservation-frontend
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      - backend
+
+
+  postgres-test:
+    profiles:
+      - ci
+
+    image: postgres:17-alpine
+
+    environment:
+      POSTGRES_DB: reservation_salles_test
+      POSTGRES_USER: reservation
+      POSTGRES_PASSWORD: reservation
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U reservation -d reservation_salles_test"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+  backend-ci:
+    profiles:
+      - ci
+
+    build:
+      context: ./backend
+      target: test
+
+    environment:
+      DATABASE_URL: >-
+        postgresql+asyncpg://reservation:reservation@postgres-test:5432/reservation_salles_test
+
+      TEST_DATABASE_URL: >-
+        postgresql+asyncpg://reservation:reservation@postgres-test:5432/reservation_salles_test
+
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+
+
+  frontend-ci:
+    profiles:
+      - ci
+
+    build:
+      context: ./frontend
+      target: test
+
+
+volumes:
+  postgres_data:
