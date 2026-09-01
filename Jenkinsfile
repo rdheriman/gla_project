@@ -9,6 +9,13 @@ pipeline {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
         timestamps()
+
+        buildDiscarder(
+            logRotator(
+                numToKeepStr: '20',
+                artifactNumToKeepStr: '10'
+            )
+        )
     }
 
     environment {
@@ -70,13 +77,57 @@ pipeline {
 
         stage('Backend Tests') {
             steps {
-                sh '''
-                    docker compose \
-                        --profile ci \
-                        run --rm \
-                        backend-ci \
-                        uv run pytest
-                '''
+                script {
+                    sh '''
+                        mkdir -p backend/test-results
+
+                        rm -f backend/test-results/pytest.xml
+
+                        docker rm -f \
+                            "reservation-pytest-${BUILD_NUMBER}" \
+                            2>/dev/null || true
+                    '''
+
+                    def testStatus = sh(
+                        returnStatus: true,
+                        script: '''
+                            docker compose \
+                                --profile ci \
+                                run \
+                                --name "reservation-pytest-${BUILD_NUMBER}" \
+                                --no-deps \
+                                backend-ci \
+                                uv run pytest \
+                                --junitxml=/app/pytest.xml
+                        '''
+                    )
+
+                    sh '''
+                        docker cp \
+                            "reservation-pytest-${BUILD_NUMBER}:/app/pytest.xml" \
+                            backend/test-results/pytest.xml \
+                            || true
+
+                        docker rm -f \
+                            "reservation-pytest-${BUILD_NUMBER}" \
+                            || true
+                    '''
+
+                    junit(
+                        testResults: 'backend/test-results/pytest.xml',
+                        allowEmptyResults: false
+                    )
+                    archiveArtifacts(
+                        artifacts: 'backend/test-results/pytest.xml',
+                        fingerprint: true
+                    )
+
+                    if (testStatus != 0) {
+                        error(
+                            'Les tests backend ont échoué.'
+                        )
+                    }
+                }
             }
         }
 
@@ -147,6 +198,24 @@ pipeline {
                         python -c \
                         "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())"
                 '''
+            }
+        }
+        stage('Build Information') {
+            steps {
+                sh '''
+                    cat > build-info.txt <<EOF
+        Job: $JOB_NAME
+        Build: $BUILD_NUMBER
+        Commit: $(git rev-parse HEAD)
+        Branch: $(git rev-parse --abbrev-ref HEAD)
+        Date: $(date -Iseconds)
+        EOF
+                '''
+
+                archiveArtifacts(
+                    artifacts: 'build-info.txt',
+                    fingerprint: true
+                )
             }
         }
     }
