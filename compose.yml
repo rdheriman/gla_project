@@ -28,7 +28,9 @@ services:
   backend:
     build:
       context: ./backend
+      target: runtime
 
+    restart: unless-stopped
 
     environment:
       DATABASE_URL: >-
@@ -41,19 +43,47 @@ services:
       postgres:
         condition: service_healthy
 
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   frontend:
     build:
       context: ./frontend
+      target: runtime
+
       args:
         VITE_API_URL: /api
 
+    restart: unless-stopped
 
     ports:
       - "80:80"
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
+    healthcheck:
+
+      test:
+        [
+          "CMD-SHELL",
+          "wget --spider -q http://127.0.0.1/ || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
 
   postgres-test:

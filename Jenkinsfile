@@ -4,7 +4,7 @@ pipeline {
     triggers {
         githubPush()
     }
-    
+
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
@@ -115,6 +115,40 @@ pipeline {
                 '''
             }
         }
+        stage('Deploy') {
+            steps {
+                echo 'Déploiement de la nouvelle version...'
+
+                sh '''
+                    docker compose \
+                        -p reservation-prod \
+                        up \
+                        -d \
+                        --build \
+                        --wait \
+                        --wait-timeout 120 \
+                        --remove-orphans \
+                        postgres backend frontend
+                '''
+            }
+        }
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                    docker compose \
+                        -p reservation-prod \
+                        ps
+                '''
+
+                sh '''
+                    docker compose \
+                        -p reservation-prod \
+                        exec -T backend \
+                        python -c \
+                        "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())"
+                '''
+            }
+        }
     }
 
 
@@ -123,19 +157,21 @@ pipeline {
         always {
             sh '''
                 docker compose \
+                    -p "$COMPOSE_PROJECT_NAME" \
                     --profile ci \
-                    down -v \
+                    down \
+                    -v \
                     --remove-orphans \
                     || true
             '''
         }
 
         success {
-            echo 'Pipeline CI terminé avec succès.'
+            echo 'CI/CD terminé avec succès.'
         }
 
         failure {
-            echo 'Le pipeline CI a échoué.'
+            echo 'Le pipeline CI/CD a échoué.'
         }
     }
 }
