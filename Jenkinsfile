@@ -166,23 +166,36 @@ pipeline {
                 '''
             }
         }
+        // stage('Deploy') {
+        //     steps {
+        //         echo 'Déploiement de la nouvelle version...'
+
+        //         sh '''
+        //             docker compose \
+        //                 -p reservation-prod \
+        //                 up \
+        //                 -d \
+        //                 --build \
+        //                 --wait \
+        //                 --wait-timeout 120 \
+        //                 --remove-orphans \
+        //                 postgres backend frontend
+        //         '''
+        //     }
+        // }
+
         stage('Deploy') {
             steps {
-                echo 'Déploiement de la nouvelle version...'
+                echo 'Mise à jour des conteneurs existants...'
 
                 sh '''
-                    docker compose \
-                        -p reservation-prod \
-                        up \
-                        -d \
-                        --build \
-                        --wait \
-                        --wait-timeout 120 \
-                        --remove-orphans \
-                        postgres backend frontend
+                    docker compose -p reservation-salles up -d \
+                    --build --wait --wait-timeout 120 \
+                    postgres backend frontend
                 '''
             }
         }
+
         stage('Verify Deployment') {
             steps {
                 sh '''
