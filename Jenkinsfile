@@ -196,23 +196,37 @@ pipeline {
             }
         }
 
+        // stage('Verify Deployment') {
+        //     steps {
+        //         sh '''
+        //             docker compose \
+        //                 -p reservation-prod \
+        //                 ps
+        //         '''
+
+        //         sh '''
+        //             docker compose \
+        //                 -p reservation-prod \
+        //                 exec -T backend \
+        //                 python -c \
+        //                 "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())"
+        //         '''
+        //     }
+        // }
+
         stage('Verify Deployment') {
             steps {
                 sh '''
-                    docker compose \
-                        -p reservation-prod \
-                        ps
+                    docker compose -p reservation-salles ps
                 '''
 
                 sh '''
-                    docker compose \
-                        -p reservation-prod \
-                        exec -T backend \
-                        python -c \
-                        "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())"
+                    docker compose -p reservation-salles exec -T backend \
+                    python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health', timeout=10).read().decode())"
                 '''
             }
         }
+
         stage('Build Information') {
             steps {
                 sh '''
